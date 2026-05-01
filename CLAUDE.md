@@ -21,21 +21,28 @@ sudo pigpiod
 python3 robot/robot.py
 ```
 
-**On the laptop** (connect to `TennisBotAP` WiFi first):
+**On the laptop** (both devices on the same LAN):
 ```bash
 pip install -r controller/requirements.txt
-python3 controller/controller.py           # defaults to 10.0.0.1
-python3 controller/controller.py <ip>      # override IP if needed
+python3 controller/controller.py <robot-ip>   # e.g. 192.168.1.50
 ```
 
-## Hotspot setup (one-time, on the Pi)
+## Static IP setup (one-time, on the Pi)
 
-```bash
-sudo bash robot/setup_hotspot.sh [ssid] [password]
-sudo reboot
-```
+The Pi connects to an existing router as a normal WiFi client with a fixed IP — no hotspot is created.
 
-After reboot the Pi broadcasts its own WiFi (`TennisBotAP` / `tennisbot` by default) and is always reachable at `10.0.0.1`.
+1. Configure WiFi credentials (if not already done):
+   ```bash
+   sudo raspi-config   # System Options → Wireless LAN
+   ```
+2. Assign the static IP:
+   ```bash
+   sudo bash robot/setup_static_ip.sh <static_ip> <router_ip> [interface]
+   # e.g.: sudo bash robot/setup_static_ip.sh 192.168.1.50 192.168.1.1
+   sudo reboot
+   ```
+
+After reboot the Pi joins the LAN at the address you chose.
 
 ## Key constants
 
