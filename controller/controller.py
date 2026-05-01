@@ -3,7 +3,9 @@
 Controller-side client. Run on your laptop/desktop.
 Reads an Xbox 360 controller and streams commands to the robot over UDP.
 
-Usage: python3 controller.py <robot_ip> [--port 5005]
+Usage: python3 controller.py [robot_ip] [--port 5005]
+  robot_ip defaults to 10.0.0.1 (the Pi's hotspot address).
+  Connect your laptop to the "TennisBotAP" WiFi network first.
 
 Controls (tank drive):
   Left stick Y  → left motor
@@ -48,7 +50,8 @@ def find_controller():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("robot_ip", help="IP address of the Raspberry Pi")
+    parser.add_argument("robot_ip", nargs="?", default="10.0.0.1",
+                        help="IP address of the Raspberry Pi (default: 10.0.0.1)")
     parser.add_argument("--port", type=int, default=5005)
     args = parser.parse_args()
 
