@@ -23,9 +23,19 @@ import argparse
 SEND_HZ      = 50        # packets per second
 DEADZONE     = 0.08      # ignore stick deflections smaller than this
 
-# Xbox 360 axis indices (Linux/xpad driver)
+# Axis indices vary by controller:
+#   Xbox 360 (xpad): left Y = 1, right Y = 4
+#   Logitech Dual Action: left Y = 1, right Y = 3
 AXIS_LEFT_Y  = 1
 AXIS_RIGHT_Y = 4
+
+AXIS_MAP = {
+    # substring (lowercased) → (left_y, right_y)
+    "xbox":    (1, 4),
+    "360":     (1, 4),
+    "logitech": (1, 3),
+    "dual action": (1, 3),
+}
 
 
 def deadzone(value, threshold=DEADZONE):
@@ -60,8 +70,23 @@ def main():
 
     joy = find_controller()
     if joy is None:
-        sys.exit("No controller detected. Plug in the Xbox 360 controller and retry.")
+        sys.exit("No controller detected. Plug in a controller and retry.")
     joy.init()
+
+    name_lower = joy.get_name().lower()
+    left_y, right_y = AXIS_LEFT_Y, AXIS_RIGHT_Y
+    for key, axes in AXIS_MAP.items():
+        if key in name_lower:
+            left_y, right_y = axes
+            break
+    # Safety check: clamp to actual axis count
+    num_axes = joy.get_numaxes()
+    if left_y >= num_axes or right_y >= num_axes:
+        print(f"WARNING: axis indices ({left_y}, {right_y}) out of range for {num_axes}-axis controller.")
+        print(f"Available axes (0..{num_axes-1}). Edit AXIS_MAP in controller.py.")
+        right_y = min(right_y, num_axes - 1)
+        left_y  = min(left_y,  num_axes - 1)
+
     print(f"Controller : {joy.get_name()}")
     print(f"Robot      : {args.robot_ip}:{args.port}")
     print(f"Rate       : {SEND_HZ} Hz")
@@ -91,8 +116,8 @@ def main():
                 left, right = 0.0, 0.0
             else:
                 # Pygame Y axis is inverted: up = -1, so negate
-                left  = -deadzone(joy.get_axis(AXIS_LEFT_Y))
-                right = -deadzone(joy.get_axis(AXIS_RIGHT_Y))
+                left  = -deadzone(joy.get_axis(left_y))
+                right = -deadzone(joy.get_axis(right_y))
 
             sock.sendto(struct.pack("ff", left, right), dest)
 
